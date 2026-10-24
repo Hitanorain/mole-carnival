@@ -207,7 +207,7 @@
 
 <script>
 'use strict';
-const VERSION = 'v1.1.1';
+const VERSION = 'v1.1.2';
 const $ = s => document.querySelector(s);
 const SAVE_KEY = 'mole-carnival-v1';
 const save = { stars: {}, best60: 0, music: true, sfx: true, voice: true, lang: 'zh', seenHelp: false, world: 0 };
@@ -1285,9 +1285,10 @@ const PTRS = new Map();
 function drawHammer(p, now) {
   const b = boardAt(p.x, p.y);
   const fever = b && b.fever > 0, stun = b && b.stun > 0;
-  const L = clamp(Math.min(W, H) * .15, 66, 130);
-  let a;
-  if (p.sw < .05) a = .7 * (1 - p.sw / .05); else if (p.sw < .12) a = 0; else a = .7 * Math.min(1, (p.sw - .12) / .15);
+  const L = clamp(Math.min(W, H) * .13, 60, 110);
+  // 平时锤头正好盖在指针上（锤头就是光标）；点下去时先抬一下再砸回来
+  let a = 0;
+  if (p.sw < .04) a = .6 * p.sw / .04; else if (p.sw < .11) a = .6 * (1 - (p.sw - .04) / .07);
   let alpha = 1;
   if (p.touch && !p.down) alpha = clamp(1 - (p.sw - .3) / .25, 0, 1);
   if (alpha <= 0) return;
@@ -1296,10 +1297,10 @@ function drawHammer(p, now) {
   c.translate(p.x, p.y);
   if (b && b.rot) c.rotate(Math.PI);
   if (stun) c.rotate(Math.sin(now * 20) * .15);
-  // 以手柄末端为轴转
-  const px = L * 1.05, py = L * .25;
+  // 以手柄末端为轴转，锤头中心 (hx, hy) 就是点击的位置
+  const px = L * .95, py = L * .55;
   c.translate(px, py); c.rotate(a); c.translate(-px, -py);
-  const hx = 0, hy = -L * .3, hl = L * .8, ht = L * .5, ang = Math.atan2(hy - py, hx - px);
+  const hx = 0, hy = 0, hl = L * .8, ht = L * .5, ang = Math.atan2(hy - py, hx - px);
   // 手柄
   c.strokeStyle = 'rgba(0,0,0,.25)'; c.lineWidth = L * .15; c.lineCap = 'round';
   c.beginPath(); c.moveTo(px, py + 3); c.lineTo(hx, hy + 3); c.stroke();
