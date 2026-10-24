@@ -43,6 +43,7 @@
   .rbtn:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(90, 140, 50, .45); }
   .rbtn svg { width: 26px; height: 26px; fill: none; stroke: #4a3218; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   .rbtn.off { opacity: .45; }
+  .rbtn.lang { font-size: 19px; color: #4a3218; }
 
   .card { background: rgba(255, 252, 240, .94); border-radius: 30px; padding: 22px 24px; box-shadow: 0 10px 0 rgba(120, 80, 30, .25), 0 20px 50px rgba(40, 30, 10, .3);
     text-align: center; max-width: 520px; width: 100%; max-height: 100%; overflow: auto; }
@@ -120,6 +121,8 @@
   <div class="tog ui">
     <button class="rbtn" data-tog="music" aria-label="背景音乐" title="背景音乐">🎵</button>
     <button class="rbtn" data-tog="sfx" aria-label="音效" title="音效">🔔</button>
+    <button class="rbtn" data-tog="voice" aria-label="鼓励语音" title="鼓励语音">💬</button>
+    <button class="rbtn lang" data-lang aria-label="语音语言" title="语音语言：中文 / English">中</button>
   </div>
   <div class="tcol">
     <div class="logo" aria-label="地鼠嘉年华">
@@ -162,6 +165,8 @@
     <div class="row">
       <button class="rbtn" data-tog="music" aria-label="背景音乐" title="背景音乐">🎵</button>
       <button class="rbtn" data-tog="sfx" aria-label="音效" title="音效">🔔</button>
+      <button class="rbtn" data-tog="voice" aria-label="鼓励语音" title="鼓励语音">💬</button>
+      <button class="rbtn lang" data-lang aria-label="语音语言" title="语音语言：中文 / English">中</button>
     </div>
     <div class="row" style="flex-direction:column;align-items:center">
       <button class="btn pink" id="psGo">继续</button>
@@ -202,10 +207,10 @@
 
 <script>
 'use strict';
-const VERSION = 'v1.0.1';
+const VERSION = 'v1.1';
 const $ = s => document.querySelector(s);
 const SAVE_KEY = 'mole-carnival-v1';
-const save = { stars: {}, best60: 0, music: true, sfx: true, seenHelp: false, world: 0 };
+const save = { stars: {}, best60: 0, music: true, sfx: true, voice: true, lang: 'zh', seenHelp: false, world: 0 };
 try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); } catch (e) {}
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
 
@@ -282,9 +287,94 @@ function vsDef() {
 }
 function demoDef() { return { mode: 'demo', theme: 'garden', grid: [3, 3], dur: 1e9, mix: { normal: 10, gold: 1, helmet: 2, bunny: 2, thief: 1 }, interval: 1.1, stay: 1.4, maxUp: 3 }; }
 
+// ---------- 鼓励语音台词（tools\make-voice.ps1 读这张表生成 voice/<语言>/<分组>-<序号>.mp3；必须是严格 JSON，两种语言分组一致） ----------
+// VOICE-BEGIN
+const VOICE = {
+  "zh": {
+    "start": ["开始啦！", "准备好了吗？出发！"],
+    "bossStart": ["大王来了，准备好！"],
+    "c5": ["五连击，好样的！", "连起来啦！"],
+    "fever": ["超级锤子，冲呀！", "金锤子来啦，划着打！"],
+    "c15": ["十五连击！太厉害啦！", "手好快呀！"],
+    "c20": ["二十连击！停不下来！"],
+    "c30": ["三十连击！打地鼠大师！"],
+    "c40": ["四十连击！太强了！"],
+    "c50": ["五十连击！不可思议！"],
+    "cmore": ["连击停不下来啦！", "继续继续！"],
+    "feverEnd": ["超级锤子结束啦"],
+    "fast": ["好快呀！", "神速！"],
+    "gold": ["金地鼠，赚大啦！", "抓到金地鼠！"],
+    "thiefRun": ["小偷跑啦，快追！", "别让它跑了！"],
+    "thiefLast": ["最后一下，抓住它！"],
+    "thiefCaught": ["抓到小偷啦！"],
+    "ice": ["全部冻住啦，快打！"],
+    "thunder": ["闪电劈下去啦！"],
+    "clock": ["多加五秒！"],
+    "bunny": ["哎呀，别打小兔子！", "小兔子是好朋友呀！"],
+    "bomb": ["哎哟，炸晕啦！", "小心炸弹呀！"],
+    "miss": ["连击断了，加油！", "跑掉了一只！"],
+    "mud": ["哎呀，糊了一脸泥！"],
+    "bossDive": ["大王钻走啦，找找它！"],
+    "bossWin": ["打败大王啦！太棒了！"],
+    "gift": ["送你一份捣蛋大礼！"],
+    "incoming": ["捣蛋来啦，小心！"],
+    "hurry": ["只剩十秒啦，加油！"],
+    "timeup": ["时间到！"],
+    "win": ["过关啦，真棒！", "太厉害啦，过关！"],
+    "star3": ["三颗星！完美！"],
+    "lose": ["差一点点，再来一次！"],
+    "best": ["新纪录！好厉害！"],
+    "nice": ["打得不错，再来挑战吧！"],
+    "blueWin": ["蓝队赢啦！"],
+    "redWin": ["红队赢啦！"],
+    "tie": ["平局！再来一局！"]
+  },
+  "en": {
+    "start": ["Let's go!", "Ready? Here we go!"],
+    "bossStart": ["Here comes the mole king! Get ready!"],
+    "c5": ["Five in a row! Nice!", "Great combo!"],
+    "fever": ["Super hammer! Go go go!", "Golden hammer! Swipe them all!"],
+    "c15": ["Fifteen in a row! Amazing!", "Super fast hands!"],
+    "c20": ["Twenty in a row! Unstoppable!"],
+    "c30": ["Thirty in a row! Mole master!"],
+    "c40": ["Forty in a row! So strong!"],
+    "c50": ["Fifty in a row! Incredible!"],
+    "cmore": ["Keep the combo going!", "Don't stop now!"],
+    "feverEnd": ["Super hammer is over"],
+    "fast": ["So fast!", "Lightning quick!"],
+    "gold": ["Golden mole! Jackpot!", "You got the golden one!"],
+    "thiefRun": ["The thief ran away! Catch him!", "Don't let him get away!"],
+    "thiefLast": ["One more hit! Get him!"],
+    "thiefCaught": ["You caught the thief!"],
+    "ice": ["Everything is frozen! Hit them now!"],
+    "thunder": ["Lightning strikes them all!"],
+    "clock": ["Five more seconds!"],
+    "bunny": ["Oh no! Don't hit the bunny!", "The bunny is your friend!"],
+    "bomb": ["Ouch! That was a bomb!", "Watch out for bombs!"],
+    "miss": ["Combo broken! Keep going!", "One got away!"],
+    "mud": ["Oh no, mud everywhere!"],
+    "bossDive": ["The king dug away! Find him!"],
+    "bossWin": ["You beat the mole king! Hooray!"],
+    "gift": ["Here comes a naughty gift!"],
+    "incoming": ["Trouble incoming! Watch out!"],
+    "hurry": ["Only ten seconds left! Hurry!"],
+    "timeup": ["Time is up!"],
+    "win": ["You did it! Great job!", "Level clear! Awesome!"],
+    "star3": ["Three stars! Perfect!"],
+    "lose": ["So close! Try again!"],
+    "best": ["New record! Wow!"],
+    "nice": ["Nice game! Try for a high score!"],
+    "blueWin": ["Blue team wins!"],
+    "redWin": ["Red team wins!"],
+    "tie": ["It's a tie! One more round!"]
+  }
+};
+// VOICE-END
+
 // ---------- 音乐和音效（Web Audio 合成） ----------
 const Snd = (() => {
-  let ac = null, out, mBus, sBus, noiseBuf, nextT = 0, step = 0, on = false, fever = false, bpm = 126, duck = false;
+  let ac = null, out, mBus, sBus, vBus, noiseBuf, nextT = 0, step = 0, on = false, tier = 0, bpm = 104, target = 104, duck = false, vDuck = 0;
+  const TIER_BPM = [112, 120, 130, 140, 150]; // 连击越高越快
   const MEL = [
     [72, null, 76, 79, 76, null, 72, 74], [76, null, 72, 69, 72, null, 76, null], [77, 76, 74, 72, 74, null, 69, null], [71, 74, 79, 77, 74, null, 71, null],
     [79, 79, 81, 79, 76, null, 72, null], [81, 81, 84, 81, 76, null, 72, null], [77, null, 81, 84, 83, 81, 77, null], [79, null, 74, 71, 74, 77, 79, null],
@@ -299,10 +389,11 @@ const Snd = (() => {
       try { ac = new AC(); } catch (e) { return; }
       const comp = ac.createDynamicsCompressor(); comp.threshold.value = -12; comp.knee.value = 10; comp.ratio.value = 5; comp.connect(ac.destination);
       out = ac.createGain(); out.gain.value = .9; out.connect(comp);
-      mBus = gain(save.music ? MUSIC_VOL : 0); sBus = gain(save.sfx ? .85 : 0);
+      mBus = gain(save.music ? MUSIC_VOL : 0); sBus = gain(save.sfx ? .85 : 0); vBus = gain(save.voice ? 1.3 : 0);
       noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
       const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       nextT = ac.currentTime + .1; setInterval(sched, 25);
+      Voice.load(ac);
     }
     if (ac.state !== 'running') ac.resume();
   }
@@ -332,28 +423,38 @@ const Snd = (() => {
     if (nextT < ac.currentTime) nextT = ac.currentTime + .02;
     while (nextT < ac.currentTime + .12) { playStep(step, nextT, sd); nextT += sd; step = (step + 1) % 64; }
   }
+  // 音乐分层：0 只有旋律和低音 → 1 连击 5 加鼓 → 2 连击 10 加踩镲、音色变亮 → 3 超级锤子升调加八度 → 4 连击 30 加闪亮琶音
   function playStep(s, t, sd) {
-    const bar = Math.floor(s / 8), i = s % 8, up = fever ? 2 : 0, v = duck ? .35 : 1;
+    bpm += (target - bpm) * .2;
+    const bar = Math.floor(s / 8), i = s % 8, up = tier >= 3 ? 2 : 0, v = (duck ? .35 : 1) * (t < vDuck ? .5 : 1);
     const note = MEL[bar][i];
     if (note) {
-      tone('square', mtof(note + up), t, sd * 1.4, .045 * v, mBus, { lp: 2600 });
+      tone('square', mtof(note + up), t, sd * 1.4, .045 * v, mBus, { lp: tier >= 2 ? 4200 : 2400 });
       tone('triangle', mtof(note + up), t, sd * 1.8, .07 * v, mBus);
-      if (fever) tone('sine', mtof(note + up + 12), t, sd, .03 * v, mBus);
+      if (tier >= 3) tone('sine', mtof(note + up + 12), t, sd, .035 * v, mBus);
     }
     if (i % 2 === 0) tone('triangle', mtof(ROOT[bar] + up + (i % 4 === 2 ? 12 : 0)), t, sd * 1.6, .16 * v, mBus);
-    if (i === 0 || i === 4) tone('sine', 150, t, .16, .32 * v, mBus, { glide: 45, gt: .14 });
-    if (i === 2 || i === 6) nz(t, .11, .16 * v, mBus, { type: 'highpass', f: 1800 });
-    if (fever || bpm > 130) nz(t, .03, .06 * v, mBus, { type: 'highpass', f: 7000 });
+    if (i === 0 || (tier >= 1 && i === 4)) tone('sine', 150, t, .16, (tier ? .32 : .2) * v, mBus, { glide: 45, gt: .14 });
+    if (tier >= 1 && (i === 2 || i === 6)) nz(t, .11, .16 * v, mBus, { type: 'highpass', f: 1800 });
+    if (tier >= 2) { nz(t, .03, .06 * v, mBus, { type: 'highpass', f: 7000 }); nz(t + sd / 2, .02, .035 * v, mBus, { type: 'highpass', f: 9000 }); }
+    if (tier >= 4) { const ch = [0, 4, 7, 12]; for (let k = 0; k < 2; k++) tone('sine', mtof(ROOT[bar] + 36 + up + ch[(i * 2 + k) % 4]), t + k * sd / 2, sd * .5, .03 * v, mBus); }
   }
   const T = () => ac.currentTime;
   return {
     unlock,
     get ready() { return ok(); },
     music(v) { on = v; },
-    setFever(v) { fever = v; },
-    setBpm(v) { bpm = v; },
+    setHeat(combo, fever, hurry) {
+      tier = fever ? (combo >= 30 ? 4 : 3) : combo >= 10 ? 2 : combo >= 5 ? 1 : 0;
+      target = TIER_BPM[tier] + (hurry ? 10 : 0);
+    },
+    calm() { tier = 0; target = 104; },
+    get tier() { return tier; },
+    get bpm() { return bpm; },
+    voice(buf) { if (!ok()) return; const s = ac.createBufferSource(); s.buffer = buf; s.connect(vBus); s.start(); vDuck = ac.currentTime + buf.duration + .1; },
+    drop() { if (!ok()) return; const t = T(); tone('sawtooth', 700, t, .35, .07, sBus, { glide: 70, lp: 1500 }); },
     duck(v) { duck = v; },
-    apply() { if (!ac) return; mBus.gain.value = save.music ? MUSIC_VOL : 0; sBus.gain.value = save.sfx ? .85 : 0; },
+    apply() { if (!ac) return; mBus.gain.value = save.music ? MUSIC_VOL : 0; sBus.gain.value = save.sfx ? .85 : 0; vBus.gain.value = save.voice ? 1.3 : 0; },
     suspend() { if (ac) ac.suspend(); },
     resume() { if (ac) ac.resume(); },
     pop() { if (!ok()) return; tone('sine', 420, T(), .07, .04, sBus, { glide: 760 }); },
@@ -381,6 +482,51 @@ const Snd = (() => {
     lose() { if (!ok()) return; const t = T(); [[67, 0], [64, .2], [60, .4], [55, .62]].forEach(([m, d]) => tone('triangle', mtof(m), t + d, .35, .14)); },
   };
 })();
+
+// ---------- 鼓励语音 ----------
+const Voice = (() => {
+  const bufs = {}, loaded = {}; let ac = null;
+  // 只下载当前语言那一套，切换语言时再下载另一套
+  function loadLang(lang) {
+    if (!ac || loaded[lang]) return;
+    loaded[lang] = true;
+    for (const g in VOICE[lang]) VOICE[lang][g].forEach((_, i) => {
+      const id = `${lang}/${g}-${i}`;
+      fetch(`voice/${id}.mp3`).then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); })
+        .then(b => new Promise((res, rej) => ac.decodeAudioData(b, res, rej))).then(buf => { bufs[id] = buf; }).catch(() => {});
+    });
+  }
+  function load(a) { ac = a; loadLang(save.lang); }
+  function speak(text) {
+    if (!window.speechSynthesis) return;
+    const u = new SpeechSynthesisUtterance(text); u.lang = save.lang === 'en' ? 'en-US' : 'zh-CN'; u.rate = 1.1; u.pitch = 1.4;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }
+  function play(g, i) {
+    const id = `${save.lang}/${g}-${i}`;
+    if (bufs[id] && Snd.ready) { Snd.voice(bufs[id]); return; }
+    speak(VOICE[save.lang][g][i]); // 录音还没下载好或缺失时退回系统朗读
+  }
+  return { load, loadLang, play, get count() { return Object.keys(bufs).length; } };
+})();
+// 大字和语音一起出：同一时间只说一句，1.6 秒内只让更高优先级的插队（大字照样显示）
+let cheerUntil = 0, cheerPri = 0;
+function say(g, i, pri) {
+  const now = performance.now();
+  if (!save.voice || (now < cheerUntil && pri <= cheerPri)) return;
+  cheerUntil = now + 1600; cheerPri = pri;
+  Voice.play(g, i);
+}
+function cheer(b, g, pri = 1, color = '#fff', size) {
+  const list = VOICE[save.lang][g]; if (!list) return;
+  const i = Math.floor(Math.random() * list.length);
+  if (b) shout(b, list[i], color, size);
+  say(g, i, pri);
+}
+function cheerAll(g, pri, color, size) {
+  const list = VOICE[save.lang][g], i = Math.floor(Math.random() * list.length);
+  G.boards.forEach(b => shout(b, list[i], color, size)); say(g, i, pri);
+}
 
 // ---------- 画布 ----------
 const cv = $('#cv'), ctx = cv.getContext('2d');
@@ -717,7 +863,7 @@ function burst(b, x, y, n, kind, colors, sp = 260, size = 8) {
   for (let i = 0; i < n; i++) { const a = rand(0, TAU), v = rand(.35, 1) * sp; fx(b, { kind, x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - sp * .3, g: 700, life: rand(.45, .8), size: size * rand(.6, 1.2), color: pick(colors), rot: rand(0, TAU), vr: rand(-8, 8) }); }
 }
 function floatText(b, x, y, s, color, size) { b.texts.push({ x, y, s, color, size: size || 26, t: 0, life: .9 }); }
-function shout(b, s, color = '#fff', size) { b.shout = { s, color, t: 0, life: 1.1, size }; }
+function shout(b, s, color = '#fff', size) { b.shout = { s, color, t: 0, life: Math.max(1.1, s.length * .055), size }; }
 function shoutAll(s, color, size) { G.boards.forEach(b => shout(b, s, color, size)); }
 
 // ---------- 规则 ----------
@@ -738,7 +884,7 @@ function spawn(b) {
 }
 
 function breakCombo(b, why) {
-  if (b.combo >= 5 && why) shout(b, why, '#fff');
+  if (b.combo >= 5 && b.def.mode !== 'demo') { Snd.drop(); if (why) cheer(b, 'miss', 2); }
   b.combo = 0;
 }
 function addHit(b, h, m, base, how) {
@@ -749,18 +895,23 @@ function addHit(b, h, m, base, how) {
   if (b.def.mode !== 'demo') b.score += pts;
   const { r, base: by } = moleBase(h, m);
   floatText(b, h.x, by - r * 2.3, '+' + pts, mult > 1 ? '#ffe14a' : '#fff', fast ? 30 : 26);
-  if (fast) floatText(b, h.x, by - r * 3, '神速!', '#7af0ff', 20);
+  if (fast) { floatText(b, h.x, by - r * 3, '神速!', '#7af0ff', 20); if (b.def.mode !== 'demo' && Math.random() < .3) say('fast', Math.floor(Math.random() * 2), 1); }
   Snd.bonk(b.combo);
   if (b.def.mode === 'demo') return;
   if (b.combo % 10 === 0) {
-    if (b.fever > 0) { b.fever += 3; shout(b, `${b.combo} 连击！`, '#ffe14a'); }
+    if (b.fever > 0) { b.fever += 3; comboCheer(b, '#ffe14a'); }
     else enterFever(b);
-  } else if (b.combo % 5 === 0) shout(b, `${b.combo} 连击！`, '#fff');
+  } else if (b.combo % 5 === 0) comboCheer(b, '#fff');
+}
+function comboCheer(b, color) {
+  const g = { 5: 'c5', 15: 'c15', 20: 'c20', 30: 'c30', 40: 'c40', 50: 'c50' }[b.combo];
+  if (g) cheer(b, g, 3, color);
+  else { shout(b, `${b.combo} 连击！`, color); say('cmore', Math.floor(Math.random() * 2), 3); }
 }
 function enterFever(b) {
-  b.fever = 6.5; Snd.fever(); shout(b, '超级锤子！', '#ffe14a', 1.25);
+  b.fever = 6.5; Snd.fever(); cheer(b, 'fever', 5, '#ffe14a', 1.25);
   burst(b, b.rect.w / 2, b.rect.h / 2, 30, 'star', ['#ffe14a', '#ff9cc0', '#8ff0c8', '#9fdcff'], 520, 12);
-  if (b.opp) { for (let k = 0; k < 2; k++) addMud(b.opp); shout(b.opp, '被糊泥巴了！', '#c98f5e'); }
+  if (b.opp) { for (let k = 0; k < 2; k++) addMud(b.opp); shout(b.opp, VOICE[save.lang].mud[0], '#c98f5e'); }
 }
 function addMud(b, x, y) {
   const field = fieldRect(b);
@@ -776,7 +927,7 @@ function hitMole(b, h, m, how) {
     if (how !== 'tap') return;
     m.st = 'hit'; m.t = 0; m.cry = true; m.squash = 1;
     if (b.def.mode !== 'demo') { b.score = Math.max(0, b.score - 30); floatText(b, h.x, py - r, '-30', '#ff5a5a', 30); }
-    b.stats.friend++; breakCombo(b); shout(b, '别打小兔子！', '#ffb8d0'); Snd.cry(); b.shake = .25;
+    b.stats.friend++; breakCombo(b); cheer(b, 'bunny', 4, '#ffb8d0'); Snd.cry(); b.shake = .25;
     burst(b, h.x, py, 6, 'heart', ['#ff8fb0', '#ffb8d0'], 180, 10);
     return;
   }
@@ -788,7 +939,7 @@ function hitMole(b, h, m, how) {
     fx(b, { kind: 'ring', x: h.x, y: py, life: .45, size: r * 3, color: '#ffb02e' });
     b.stun = 1.1; b.stats.bomb++;
     if (b.def.mode !== 'demo') { b.score = Math.max(0, b.score - 20); floatText(b, h.x, py - r, '-20', '#ff5a5a', 30); }
-    breakCombo(b); shout(b, '砰！被炸晕了', '#ffd34a'); Snd.boom(); b.shake = .55;
+    breakCombo(b); cheer(b, 'bomb', 4, '#ffd34a'); Snd.boom(); b.shake = .55;
     return;
   }
   if (m.type === 'helmet' && m.hp > 1) {
@@ -807,7 +958,7 @@ function hitMole(b, h, m, how) {
       Snd.coin(); setTimeout(() => Snd.poof(), 60);
       const nh = pick(others), nm = newMole(b, 'thief'); nm.hops = m.hops; nm.stay *= .85; nh.m = nm;
       h.m = null; h.cool = .3;
-      shout(b, m.hops ? '跑了！再抓！' : '最后一次！', '#fff');
+      cheer(b, m.hops ? 'thiefRun' : 'thiefLast', 3);
       return;
     }
   }
@@ -821,11 +972,11 @@ function hitMole(b, h, m, how) {
       burst(b, h.x, base - r * 1.4, 40, 'star', ['#ffe14a', '#ff9cc0', '#8ff0c8', '#9fdcff'], 650, 14);
       burst(b, h.x, base - r, 18, 'coin', ['#ffd24a'], 500, 10);
       b.score += 200; floatText(b, h.x, base - r * 3, '+200', '#ffe14a', 40);
-      shout(b, '打败地鼠大王！', '#ffe14a', 1.2);
+      cheer(b, 'bossWin', 11, '#ffe14a', 1.2);
       b.holes.forEach(o => { if (o.m && o !== h && o.m.st !== 'hit') { o.m.st = 'fall'; } });
     } else if (bs.hits >= 3) {
       m.st = 'sink'; bs.hits = 0; b.queue.push('helmet', 'helmet'); b.spawnT = .3;
-      shout(b, '大王钻走了！', '#fff');
+      cheer(b, 'bossDive', 3);
     }
     return;
   }
@@ -836,11 +987,11 @@ function hitMole(b, h, m, how) {
   burst(b, h.x, h.y, 5, 'dirt', [THEMES[b.def.theme].mound, THEMES[b.def.theme].moundTop], 220, 7);
   fx(b, { kind: 'ring', x: h.x, y: py, life: .3, size: r * 1.8, color: '#fff' });
   let base0 = T.pts;
-  if (m.type === 'thief') { base0 = 60; b.stats.thief++; shout(b, '抓到小偷！', '#ffe14a'); burst(b, h.x, py, 12, 'coin', ['#ffd24a'], 380, 10); Snd.coin(); }
+  if (m.type === 'thief') { base0 = 60; b.stats.thief++; cheer(b, 'thiefCaught', 3, '#ffe14a'); burst(b, h.x, py, 12, 'coin', ['#ffd24a'], 380, 10); Snd.coin(); }
   addHit(b, h, m, base0, how);
-  if (m.type === 'gold') { b.stats.gold++; Snd.gold(); }
+  if (m.type === 'gold') { b.stats.gold++; Snd.gold(); if (b.def.mode !== 'demo') say('gold', Math.floor(Math.random() * 2), 2); }
   if (m.type === 'ice') {
-    b.freeze = 3; Snd.freeze(); shout(b, '全部冻住！', '#bfeaff');
+    b.freeze = 3; Snd.freeze(); cheer(b, 'ice', 3, '#bfeaff');
     for (let k = 0; k < 24; k++) fx(b, { kind: 'snow', x: rand(0, b.rect.w), y: rand(b.hudH, b.rect.h), vx: rand(-30, 30), vy: rand(20, 80), life: rand(.8, 1.6), size: rand(3, 7), color: '#fff' });
   }
   if (m.type === 'thunder') {
@@ -851,12 +1002,12 @@ function hitMole(b, h, m, how) {
       fx(b, { kind: 'bolt', x: h.x, y: py, tx: o.x, ty: ob.base - ob.r * 1.2, life: .35, seed: Math.random() * 100 });
       hitMole(b, o, o.m, 'zap'); n++;
     }
-    shout(b, n ? `闪电劈中 ${n} 只！` : '闪电！', '#fff36a');
+    cheer(b, 'thunder', 3, '#fff36a');
   }
-  if (m.type === 'clock' && b.def.mode !== 'vs' && b.def.mode !== 'demo') { b.time += 5; floatText(b, h.x, py - r * 2.2, '+5 秒', '#7af0ff', 26); Snd.gold(); }
+  if (m.type === 'clock' && b.def.mode !== 'vs' && b.def.mode !== 'demo') { b.time += 5; floatText(b, h.x, py - r * 2.2, '+5 秒', '#7af0ff', 26); Snd.gold(); cheer(b, 'clock', 2, '#7af0ff'); }
   if (m.type === 'gift' && b.opp) {
     b.opp.queue.push('bomb', 'bunny', 'bomb', 'bunny', 'bomb'); b.opp.spawnT = .15; addMud(b.opp);
-    shout(b, '送出捣蛋！', '#ff9cc0'); shout(b.opp, '捣蛋来啦！', '#ff9cc0');
+    cheer(b, 'gift', 3, '#ff9cc0'); shout(b.opp, VOICE[save.lang].incoming[0], '#ff9cc0');
   }
 }
 function escape(b, h, m) {
@@ -930,7 +1081,7 @@ function updateBoard(b, dt, now) {
   if (d.mode !== 'demo') b.time -= dt;
   if (b.stun > 0) b.stun -= dt;
   if (b.freeze > 0) b.freeze -= dt;
-  if (b.fever > 0) { b.fever -= dt; if (b.fever <= 0) shout(b, '超级锤子结束', '#fff'); }
+  if (b.fever > 0) { b.fever -= dt; if (b.fever <= 0) cheer(b, 'feverEnd', 1); }
   const f = curF(b) * (b.fever > 0 ? 1.25 : 1);
   b.spawnT -= dt;
   if (b.spawnT <= 0 && !(b.boss && b.boss.dead)) {
@@ -959,7 +1110,7 @@ function throwMud(b, h) {
   const m = h.m, { r, base } = moleBase(h, m), fr = fieldRect(b);
   const tx = rand(fr.x + fr.w * .15, fr.x + fr.w * .85), ty = rand(fr.y + fr.h * .1, fr.y + fr.h * .85);
   fx(b, { kind: 'mudball', x: h.x, y: base - r * 1.6, sx: h.x, sy: base - r * 1.6, tx, ty, life: .5, size: r * .35 });
-  m.squash = .6; Snd.throw_();
+  m.squash = .6; Snd.throw_(); if (Math.random() < .4) setTimeout(() => say('mud', 0, 2), 500);
 }
 function updateFx(b, dt) {
   b.shake = Math.max(0, b.shake - dt);
@@ -982,14 +1133,14 @@ function step(dt) {
   if (!G.running) return;
   if (G.count > 0) {
     const prev = Math.ceil(G.count); G.count -= dt; const cur = Math.ceil(G.count);
-    if (cur !== prev) { if (cur > 0) { shoutAll(String(cur), '#fff', 1.6); Snd.tick(); } else { shoutAll('开始！', '#ffe14a', 1.4); Snd.go(); } }
+    if (cur !== prev) { if (cur > 0) { shoutAll(String(cur), '#fff', 1.6); Snd.tick(); } else { cheerAll(G.boards[0].boss ? 'bossStart' : 'start', 10, '#ffe14a', 1.3); Snd.go(); } }
     return;
   }
   if (G.ending > 0) { G.ending -= dt; G.boards.forEach(b => updateMoles(b, dt, now)); if (G.ending <= 0) showResult(); return; }
   G.boards.forEach(b => updateBoard(b, dt, now));
   const b0 = G.boards[0];
-  Snd.setFever(G.boards.some(b => b.fever > 0));
-  Snd.setBpm(b0.time < 10 ? 144 : 126);
+  Snd.setHeat(Math.max(...G.boards.map(b => b.combo)), G.boards.some(b => b.fever > 0), b0.time < 10);
+  if (b0.time < 10 && !G.hurried) { G.hurried = true; say('hurry', 0, 6); }
   const sec = Math.ceil(b0.time);
   if (sec <= 5 && sec >= 1 && sec !== G.lastSec) Snd.tick();
   G.lastSec = sec;
@@ -1001,9 +1152,9 @@ function step(dt) {
 }
 function endGame(bossWin) {
   G.ending = 1.4; G.bossWin = bossWin;
-  if (!bossWin) shoutAll('时间到！', '#fff', 1.3);
+  if (!bossWin) cheerAll('timeup', 10, '#fff', 1.3);
   G.boards.forEach(b => { b.fever = 0; b.holes.forEach(h => { if (h.m && h.m.st !== 'hit') h.m.st = 'fall'; }); });
-  Snd.setFever(false); Snd.setBpm(126);
+  Snd.calm();
 }
 
 // ---------- 绘制 ----------
@@ -1042,7 +1193,8 @@ function drawBoard(b, now) {
   if (b.shout) {
     const s = b.shout, k = s.t / s.life, sc = (s.size || 1) * (k < .12 ? .5 + k / .12 * .7 : k < .25 ? 1.2 - (k - .12) / .13 * .2 : 1);
     c.save(); c.globalAlpha = k > .75 ? (1 - k) / .25 : 1;
-    const fs = Math.min(w / 8, 64) * sc;
+    let fs = Math.min(w / 8, 64) * sc;
+    c.font = `${Math.round(fs)}px ${FONT}`; const tw = c.measureText(s.s).width; if (tw > w * .9) fs *= w * .9 / tw; // 英文句子长，太宽就缩小
     txt(c, s.s, w / 2, b.hudH + (h - b.hudH) * .42, fs, s.color, { stroke: 'rgba(70,35,10,.85)', sw: fs * .2 });
     c.restore();
   }
@@ -1244,7 +1396,7 @@ function setPlaying(v) { document.body.classList.toggle('playing', v); }
 function goTitle() {
   G.mode = 'demo'; G.running = false; G.paused = false; G.count = 0; G.ending = 0;
   G.boards = [makeBoard(demoDef(), 0)]; layoutAll();
-  setPlaying(false); show('title'); Snd.duck(true); Snd.music(true); Snd.setFever(false); Snd.setBpm(116);
+  setPlaying(false); show('title'); Snd.duck(true); Snd.music(true); Snd.calm();
   $('#bestLbl').textContent = [save.best60 ? `60 秒最高 ${save.best60}` : '', `闯关 ⭐ ${totalStars()}/90`].filter(Boolean).join(' · ');
 }
 function totalStars() { let s = 0; for (const k in save.stars) s += save.stars[k]; return s; }
@@ -1289,13 +1441,13 @@ function showIntro(L) {
 }
 
 function startGame(mode) {
-  G.mode = mode; G.paused = false; G.running = true; G.ending = 0; G.lastSec = 99;
+  G.mode = mode; G.paused = false; G.running = true; G.ending = 0; G.lastSec = 99; G.hurried = false;
   const defs = mode === 'level' ? [levelDef(G.L)] : mode === 'timed' ? [timedDef()] : [vsDef(), vsDef()];
   G.boards = defs.map((d, i) => makeBoard(d, i));
   if (mode === 'vs') { G.boards[0].opp = G.boards[1]; G.boards[1].opp = G.boards[0]; }
   layoutAll();
   G.count = 3.999; shoutAll('3', '#fff', 1.6); Snd.tick();
-  show(null); setPlaying(true); Snd.duck(false); Snd.music(true); Snd.setBpm(126);
+  show(null); setPlaying(true); Snd.duck(false); Snd.music(true); Snd.calm();
 }
 function pause() { if (!G.running || G.ending > 0 || G.mode === 'demo') return; G.paused = true; Snd.duck(true); show('pause'); }
 function resume() { G.paused = false; Snd.duck(false); show(null); }
@@ -1321,21 +1473,21 @@ function showResult() {
     if (pass) {
       const prev = save.stars[d.L] || 0; save.stars[d.L] = Math.max(prev, n); persist();
       if (d.L < 30) $('#rsNext').style.display = '';
-      Snd.win();
-    } else Snd.lose();
+      Snd.win(); if (!d.boss) setTimeout(() => say(n === 3 ? 'star3' : 'win', n === 3 ? 0 : Math.floor(Math.random() * 2), 12), 600);
+    } else { Snd.lose(); setTimeout(() => say('lose', 0, 12), 600); }
     [...stars].forEach((s, i) => setTimeout(() => { if (i < n) { s.classList.add('on'); Snd.coin(); } }, 350 + i * 320));
   } else if (d.mode === 'timed') {
     const rec = b.score > save.best60;
     if (rec) { save.best60 = b.score; persist(); $('#rsNote').innerHTML = '<div class="newrec">新纪录！</div>'; }
     $('#rsTitle').textContent = '60 秒挑战';
     $('#rsScore').textContent = b.score;
-    Snd.win();
+    Snd.win(); setTimeout(() => say(rec ? 'best' : 'nice', 0, 12), 600);
   } else {
     const [p1, p2] = G.boards;
     $('#rsTitle').textContent = p1.score === p2.score ? '平局！' : p1.score > p2.score ? '🔵 蓝队赢了！' : '🔴 红队赢了！';
     $('#rsScore').innerHTML = `<span style="color:#3a8fe6">${p1.score}</span> : <span style="color:#ff5a7a">${p2.score}</span>`;
     $('#rsStats').textContent = `蓝队最高连击 ${p1.maxCombo} · 红队最高连击 ${p2.maxCombo}`;
-    Snd.win();
+    Snd.win(); setTimeout(() => say(p1.score === p2.score ? 'tie' : p1.score > p2.score ? 'blueWin' : 'redWin', 0, 12), 600);
   }
   show('result');
 }
@@ -1349,7 +1501,14 @@ function renderGuide() {
   g.querySelectorAll('canvas').forEach(c => moleIcon(c, c.dataset.t));
 }
 
-function syncTogs() { document.querySelectorAll('[data-tog]').forEach(b => b.classList.toggle('off', !save[b.dataset.tog])); }
+function syncTogs() {
+  document.querySelectorAll('[data-tog]').forEach(b => b.classList.toggle('off', !save[b.dataset.tog]));
+  document.querySelectorAll('[data-lang]').forEach(b => { b.textContent = save.lang === 'en' ? 'EN' : '中'; b.classList.toggle('off', !save.voice); });
+}
+document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => {
+  save.lang = save.lang === 'en' ? 'zh' : 'en'; if (!save.voice) save.voice = true; persist(); syncTogs();
+  Snd.unlock(); Snd.apply(); Voice.loadLang(save.lang); cheerUntil = 0; say('start', 0, 1);
+}));
 document.querySelectorAll('[data-tog]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.tog; save[k] = !save[k]; persist(); syncTogs(); Snd.unlock(); Snd.apply(); }));
 
 $('#bLevels').onclick = () => { renderLevels(); show('levels'); };
@@ -1376,7 +1535,7 @@ syncTogs();
 resize();
 goTitle();
 requestAnimationFrame(ts => { last = ts; loop(ts); });
-window.MC = { G, levelDef, startGame, showIntro, hitMole, pickHole, save, step, whack, showResult, PTRS };
+window.MC = { G, levelDef, startGame, showIntro, hitMole, pickHole, save, step, whack, showResult, PTRS, Snd, Voice, VOICE };
 </script>
 </body>
 </html>
