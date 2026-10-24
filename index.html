@@ -38,7 +38,7 @@
   .btn.sky:active { box-shadow: inset 0 3px 0 rgba(255,255,255,.5), 0 2px 0 #1f6fb8; }
   .btn.small { font-size: 20px; padding: 9px 22px; min-width: 130px; }
   .btn small { font-size: 14px; opacity: .9; letter-spacing: 0; }
-  .rbtn { width: 50px; height: 50px; border-radius: 50%; font-size: 23px; display: inline-flex; align-items: center; justify-content: center; flex: none;
+  .rbtn { cursor: pointer; width: 50px; height: 50px; border-radius: 50%; font-size: 23px; display: inline-flex; align-items: center; justify-content: center; flex: none;
     background: rgba(255, 255, 255, .9); box-shadow: 0 5px 0 rgba(90, 140, 50, .45), 0 8px 18px rgba(40, 60, 20, .18); transition: transform .08s, box-shadow .08s; }
   .rbtn:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(90, 140, 50, .45); }
   .rbtn svg { width: 26px; height: 26px; fill: none; stroke: #4a3218; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
@@ -53,8 +53,8 @@
 
   /* 首页 */
   #title { flex-direction: column; }
-  #home { position: fixed; left: 14px; top: calc(var(--st) + 12px); }
-  .tog { position: fixed; right: 14px; top: calc(var(--st) + 12px); display: flex; gap: 10px; }
+  #home { position: fixed; z-index: 5; left: 14px; top: calc(var(--st) + 12px); cursor: pointer; }
+  .tog { position: fixed; z-index: 5; right: 14px; top: calc(var(--st) + 12px); display: flex; gap: 10px; }
   .tcol { display: flex; flex-direction: column; align-items: center; gap: 14px; }
   .logo h1 { margin: 0; font-weight: normal; font-size: clamp(46px, 11vw, 84px); line-height: 1.05; letter-spacing: .04em; white-space: nowrap; }
   .logo h1 span { display: inline-block; color: var(--c); text-shadow: 0 4px 0 var(--d), 0 6px 0 var(--d), 0 12px 18px rgba(40, 30, 10, .35);
@@ -207,7 +207,7 @@
 
 <script>
 'use strict';
-const VERSION = 'v1.1';
+const VERSION = 'v1.1.1';
 const $ = s => document.querySelector(s);
 const SAVE_KEY = 'mole-carnival-v1';
 const save = { stars: {}, best60: 0, music: true, sfx: true, voice: true, lang: 'zh', seenHelp: false, world: 0 };
@@ -1386,7 +1386,12 @@ window.addEventListener('pointerup', up);
 window.addEventListener('pointercancel', up);
 document.addEventListener('pointerdown', () => Snd.unlock(), { capture: true });
 cv.addEventListener('contextmenu', e => e.preventDefault());
-document.addEventListener('mouseleave', () => { for (const p of PTRS.values()) if (!p.touch) p.vis = false; });
+// 鼠标离开画面（移到按钮上、移出窗口、切走）就收起锤子，露出正常光标
+function hideMouse() { const m = PTRS.get('mouse'); if (m) m.vis = false; }
+cv.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideMouse(); });
+document.documentElement.addEventListener('mouseleave', hideMouse);
+window.addEventListener('mouseout', e => { if (!e.relatedTarget) hideMouse(); });
+window.addEventListener('blur', hideMouse);
 
 // ---------- 界面 ----------
 const SCREENS = ['title', 'levels', 'intro', 'pause', 'result', 'help'];
