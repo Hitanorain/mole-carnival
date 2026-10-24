@@ -202,7 +202,7 @@
 
 <script>
 'use strict';
-const VERSION = 'v1.0';
+const VERSION = 'v1.0.1';
 const $ = s => document.querySelector(s);
 const SAVE_KEY = 'mole-carnival-v1';
 const save = { stars: {}, best60: 0, music: true, sfx: true, seenHelp: false, world: 0 };
@@ -976,7 +976,7 @@ function updateFx(b, dt) {
 function step(dt) {
   G.t += dt; const now = G.t;
   for (const b of G.boards) updateFx(b, dt);
-  for (const p of PTRS.values()) p.sw += dt;
+  sweepPtrs(dt);
   if (G.paused) return;
   if (G.mode === 'demo') { if (G.boards[0]) updateBoard(G.boards[0], dt, now); return; }
   if (!G.running) return;
@@ -1190,20 +1190,25 @@ function loop(ts) {
 }
 
 // ---------- 输入 ----------
+// 鼠标只有一把锤子；手指每次按下一把，抬起后很快淡出删掉
+const pkey = e => e.pointerType === 'mouse' ? 'mouse' : e.pointerId;
 function ptr(e) {
-  let p = PTRS.get(e.pointerId);
-  if (!p) { p = { x: e.clientX, y: e.clientY, sw: 9, down: false, vis: false, touch: e.pointerType !== 'mouse', hitAt: new Map() }; PTRS.set(e.pointerId, p); }
+  const k = pkey(e);
+  let p = PTRS.get(k);
+  if (!p) { p = { x: e.clientX, y: e.clientY, sw: 9, idle: 0, down: false, vis: false, touch: e.pointerType !== 'mouse' }; PTRS.set(k, p); }
+  p.idle = 0;
   return p;
 }
 cv.addEventListener('pointerdown', e => {
   Snd.unlock(); e.preventDefault();
-  const p = ptr(e); p.x = e.clientX; p.y = e.clientY; p.down = true; p.sw = 0; p.vis = true; p.touch = e.pointerType !== 'mouse';
+  const p = ptr(e); p.x = e.clientX; p.y = e.clientY; p.down = true; p.sw = 0; p.vis = true;
+  if (p.touch) { const m = PTRS.get('mouse'); if (m) m.vis = false; } // 触屏电脑：用手指时藏起鼠标锤子
   try { cv.setPointerCapture(e.pointerId); } catch (er) {}
   whack(p.x, p.y, false);
 });
 window.addEventListener('pointermove', e => {
-  const p = PTRS.get(e.pointerId) || (e.pointerType === 'mouse' ? ptr(e) : null); if (!p) return;
-  p.x = e.clientX; p.y = e.clientY;
+  const p = PTRS.get(pkey(e)) || (e.pointerType === 'mouse' ? ptr(e) : null); if (!p) return;
+  p.x = e.clientX; p.y = e.clientY; p.idle = 0;
   if (e.pointerType === 'mouse') p.vis = e.target === cv;
   if (p.down) { // 超级锤子：按住划过去也能打
     const b = boardAt(p.x, p.y);
@@ -1213,7 +1218,18 @@ window.addEventListener('pointermove', e => {
     }
   }
 });
-function up(e) { const p = PTRS.get(e.pointerId); if (!p) return; p.down = false; if (p.touch) setTimeout(() => { if (!p.down) PTRS.delete(e.pointerId); }, 600); }
+function up(e) { const p = PTRS.get(pkey(e)); if (p) { p.down = false; p.idle = 0; } }
+// 手指锤子：抬起后淡出就删；万一系统吞掉了抬起事件，按住 2 秒没动静也当作抬起
+function sweepPtrs(dt) {
+  for (const [k, p] of PTRS) {
+    p.sw += dt; p.idle += dt;
+    if (!p.touch) continue;
+    if (p.down && p.idle > 2) p.down = false;
+    if (!p.down && p.sw > .6 && p.idle > .6) PTRS.delete(k);
+  }
+}
+function dropTouches() { for (const [k, p] of PTRS) if (p.touch) PTRS.delete(k); }
+window.addEventListener('blur', dropTouches);
 window.addEventListener('pointerup', up);
 window.addEventListener('pointercancel', up);
 document.addEventListener('pointerdown', () => Snd.unlock(), { capture: true });
@@ -1352,7 +1368,7 @@ $('#rsHome').onclick = goTitle;
 $('#rsRetry').onclick = () => G.mode === 'level' ? showIntro(G.L) : startGame(G.mode);
 $('#rsNext').onclick = () => { G.L = Math.min(30, G.L + 1); save.world = Math.floor((G.L - 1) / 10); persist(); showIntro(G.L); };
 document.addEventListener('keydown', e => { if (e.key === 'Escape' || e.key === 'p') { if (G.paused) resume(); else pause(); } });
-document.addEventListener('visibilitychange', () => { if (document.hidden) { pause(); Snd.suspend(); } else Snd.resume(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { pause(); Snd.suspend(); dropTouches(); } else Snd.resume(); });
 window.addEventListener('resize', resize);
 
 $('#ver').textContent = VERSION;
@@ -1360,7 +1376,7 @@ syncTogs();
 resize();
 goTitle();
 requestAnimationFrame(ts => { last = ts; loop(ts); });
-window.MC = { G, levelDef, startGame, showIntro, hitMole, pickHole, save, step, whack, showResult };
+window.MC = { G, levelDef, startGame, showIntro, hitMole, pickHole, save, step, whack, showResult, PTRS };
 </script>
 </body>
 </html>
